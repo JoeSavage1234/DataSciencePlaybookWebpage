@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Science Playbook Wizard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .wizard-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .wizard-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 30px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .wizard-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .wizard-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .phase-indicator {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .step-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            width: 8.33%;
+            transition: width 0.5s ease;
+        }
+
+        .wizard-content {
+            padding: 40px;
+            min-height: 500px;
+        }
+
+        .step {
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .phase-title {
+            font-size: 1.8rem;
+            color: #4facfe;
+            margin-bottom: 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .question {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .checklist-item {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .checklist-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #4facfe;
+        }
+
+        .checklist-item.completed {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-color: #28a745;
+        }
+
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #6c757d;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            background: white;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .checklist-item.completed .checkbox {
+            background: #28a745;
+            border-color: #28a745;
+        }
+
+        .item-content {
+            flex: 1;
+        }
+
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .item-description {
+            font-size: 0.9rem;
+            color: #6c757d;
+            line-height: 1.5;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #4facfe;
+        }
+
+        .option.selected {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-color: #4facfe;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.3);
+        }
+
+        .option-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .option-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .info-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .info-title {
+            font-size: 1.4rem;
+            color: #1976d2;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .info-content {
+            color: #424242;
+            line-height: 1.6;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 30px 40px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .completion-indicator {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .model-recommendation {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .model-recommendation h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .model-recommendation p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="wizard-container">
+        <div class="wizard-header">
+            <div class="phase-indicator" id="phase-indicator">Phase 1</div>
+            <div class="step-indicator">
+                Step <span id="current-step">1</span> of <span id="total-steps">12</span>
+            </div>
+            <h1>📊 Data Science Playbook Wizard</h1>
+            <p>Complete guide from data ingestion to model deployment</p>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <div class="wizard-content">
+            <!-- Step 1: Data Ingestion -->
+            <div class="step active" id="step-1">
+                <div class="phase-title">📥 Phase 1: Data Ingestion</div>
+                <div class="info-section">
+                    <div class="info-title">Data Ingestion Checklist</div>
+                    <div class="info-content">Complete these steps to properly ingest your data:</div>
+                </div>
+                <div class="checklist">
+                    <div class="checklist-item" data-item="download">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Download the dataset as a CSV file</div>
+                            <div class="item-description">Ensure your data is in CSV format for easy processing</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="libraries">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Import required libraries</div>
+                            <div class="item-description">pandas, NumPy, matplotlib, and seaborn</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="directory">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Place CSV in notebook directory</div>
+                            <div class="item-description">Keep files organized in the same folder</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="read">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Read CSV and store in variable</div>
+                            <div class="item-description">Use pd.read_csv() to load your data</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Understanding Data -->
+            <div class="step" id="step-2">
+                <div class="phase-title">🔍 Phase 2: Data Understanding</div>
+                <div class="info-section">
+                    <div class="info-title">Understand Your Data</div>
+                    <div class="info-content">Before cleaning, you need to understand what you're working with:</div>
+                </div>
+                <div class="checklist">
+                    <div class="checklist-item" data-item="dimensions">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Check dataset dimensions</div>
+                            <div class="item-description">Use df.shape to see rows and columns</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="columns">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Understand each column</div>
+                            <div class="item-description">Know what each feature represents</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="variables">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Identify independent and dependent variables</div>
+                            <div class="item-description">Know your features (X) and target (y)</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="datatypes">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Check data types</div>
+                            <div class="item-description">Use df.dtypes and df.info()</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="statistics">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Review statistics</div>
+                            <div class="item-description">Use df.describe() for numerical summaries</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="unique">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Check unique values</div>
+                            <div class="item-description">Use value_counts() for categorical data</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="nulls">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Find null values</div>
+                            <div class="item-description">Use df.isnull().sum() to identify missing data</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Data Cleaning -->
+            <div class="step" id="step-3">
+                <div class="phase-title">🧹 Phase 2: Data Cleaning</div>
+                <div class="info-section">
+                    <div class="info-title">Clean Your Data</div>
+                    <div class="info-content">Now clean your data to prepare it for analysis:</div>
+                </div>
+                <div class="checklist">
+                    <div class="checklist-item" data-item="duplicates">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Delete duplicate entries</div>
+                            <div class="item-description">Use df.drop_duplicates()</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="nullhandling">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Handle null values</div>
+                            <div class="item-description">Delete or impute missing values (mean, median, mode)</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="outliers">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Handle outliers</div>
+                            <div class="item-description">Identify and address extreme values</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="datatypeconv">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Convert data types</div>
+                            <div class="item-description">Fix incorrect data types (string to integer, etc.)</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="standardize">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Standardize data</div>
+                            <div class="item-description">Fix inconsistencies like "Apple" vs "apple"</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Data Analysis -->
+            <div class="step" id="step-4">
+                <div class="phase-title">📈 Phase 3: Data Analysis</div>
+                <div class="info-section">
+                    <div class="info-title">Analyze Your Data</div>
+                    <div class="info-content">Explore relationships and patterns in your data:</div>
+                </div>
+                <div class="checklist">
+                    <div class="checklist-item" data-item="correlations">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Explore correlations</div>
+                            <div class="item-description">Use corr(), groupby(), crosstab() to find relationships</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="visualizations">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Create visualizations</div>
+                            <div class="item-description">Bar plots, scatter plots, heatmaps, box plots, line plots</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Feature Engineering -->
+            <div class="step" id="step-5">
+                <div class="phase-title">⚙️ Phase 4: Feature Engineering</div>
+                <div class="info-section">
+                    <div class="info-title">Engineer Your Features</div>
+                    <div class="info-content">Prepare your features for machine learning:</div>
+                </div>
+                <div class="checklist">
+                    <div class="checklist-item" data-item="newfeatures">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Create new informative features</div>
+                            <div class="item-description">Combine or transform existing features</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="encoding">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">One-hot encode categorical features</div>
+                            <div class="item-description">Convert categories to numerical format</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="scaling">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Standardize features</div>
+                            <div class="item-description">Scale features for model training</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6: Model Training Setup -->
+            <div class="step" id="step-6">
+                <div class="phase-title">🚀 Phase 5: Model Training Setup</div>
+                <div class="info-section">
+                    <div class="info-title">Prepare for Model Training</div>
+                    <div class="info-content">Set up your data for machine learning:</div>
+                </div>
+                <div class="checklist">
+                    <div class="checklist-item" data-item="splitvars">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Split into X and y</div>
+                            <div class="item-description">Separate independent (X) and dependent (y) variables</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="traintest">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Create train/test split</div>
+                            <div class="item-description">80% training, 20% testing split</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 7: Problem Type -->
+            <div class="step" id="step-7">
+                <div class="phase-title">🎯 Phase 5: Model Selection</div>
+                <div class="completion-indicator">✅ Data preparation complete! Now let's find your optimal model.</div>
+                <div class="question">What is the nature of your prediction target?</div>
+                <div class="options">
+                    <div class="option" data-value="classification">
+                        <div class="option-label">🏷️ Classification</div>
+                        <div class="option-description">You are predicting a category or class (e.g., spam/not spam, cat/dog)</div>
+                    </div>
+                    <div class="option" data-value="regression">
+                        <div class="option-label">📈 Regression</div>
+                        <div class="option-description">You are predicting a continuous numerical value (e.g., price, temperature)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 8: Relationship Type for Regression OR Scalability for Classification -->
+            <div class="step" id="step-8">
+                <div class="phase-title">🎯 Phase 5: Model Selection</div>
+                <div class="question" id="step-8-question">Does your model need to scale well for large datasets with multiple features?</div>
+                <div class="options" id="step-8-options">
+                    <div class="option" data-value="no-scale">
+                        <div class="option-label">❌ No</div>
+                        <div class="option-description">Working with smaller datasets or performance isn't critical</div>
+                    </div>
+                    <div class="option" data-value="yes-scale">
+                        <div class="option-label">✅ Yes</div>
+                        <div class="option-description">Large datasets with many features, performance is important</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 9: Various branching questions -->
+            <div class="step" id="step-9">
+                <div class="phase-title">🎯 Phase 5: Model Selection</div>
+                <div class="question" id="step-9-question">Is interpretability a priority?</div>
+                <div class="options" id="step-9-options">
+                    <div class="option" data-value="interpretable">
+                        <div class="option-label">🔍 Yes</div>
+                        <div class="option-description">I need to understand how the model makes decisions</div>
+                    </div>
+                    <div class="option" data-value="not-interpretable">
+                        <div class="option-label">🤖 No</div>
+                        <div class="option-description">Model accuracy is more important than explainability</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 10: Various branching questions -->
+            <div class="step" id="step-10">
+                <div class="phase-title">🎯 Phase 5: Model Selection</div>
+                <div class="question" id="step-10-question">Is simplicity and intuitiveness a priority?</div>
+                <div class="options" id="step-10-options">
+                    <div class="option" data-value="simple">
+                        <div class="option-label">😊 Yes</div>
+                        <div class="option-description">I prefer simple, easy-to-understand models</div>
+                    </div>
+                    <div class="option" data-value="complex">
+                        <div class="option-label">🧠 No</div>
+                        <div class="option-description">I'm comfortable with more complex models</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 11: Data Complexity -->
+            <div class="step" id="step-11">
+                <div class="phase-title">🎯 Phase 5: Model Selection</div>
+                <div class="question" id="step-11-question">How complex are the relationships in your data?</div>
+                <div class="options" id="step-11-options">
+                    <div class="option" data-value="linear">
+                        <div class="option-label">📏 Linear/Simple</div>
+                        <div class="option-description">The data has simple linear or planar relationships</div>
+                    </div>
+                    <div class="option" data-value="nonlinear">
+                        <div class="option-label">🌀 Non-linear/Complex</div>
+                        <div class="option-description">The data has complex, non-linear relationships</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 12: Final Training Steps -->
+            <div class="step" id="step-12">
+                <div class="phase-title">🏁 Phase 5: Complete Model Training</div>
+                <div id="model-recommendation"></div>
+                <div class="info-section">
+                    <div class="info-title">Train and Evaluate Your Model</div>
+                    <div class="info-content">Final steps to train and optimize your chosen model:</div>
+                </div>
+                <div class="checklist">
+                    <div class="checklist-item" data-item="trainmodel">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Train the model on training set</div>
+                            <div class="item-description">Fit your chosen model to the training data</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="testmodel">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Test on test set</div>
+                            <div class="item-description">Evaluate model performance on unseen data</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="evaluate">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Evaluate accuracy and confusion matrix</div>
+                            <div class="item-description">Measure model performance metrics</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="finetune">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Fine-tune with hyperparameters</div>
+                            <div class="item-description">Optimize model parameters for better performance</div>
+                        </div>
+                    </div>
+                    <div class="checklist-item" data-item="iterate">
+                        <div class="checkbox">✓</div>
+                        <div class="item-content">
+                            <div class="item-title">Iterate until best accuracy</div>
+                            <div class="item-description">Repeat training and tuning until satisfied</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completion Page -->
+            <div class="step" id="completion">
+                <div style="text-align: center; padding: 40px 20px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px; animation: bounce 2s infinite;">🎉</div>
+                    <h1 style="font-size: 2.5rem; color: #4facfe; margin-bottom: 15px; font-weight: bold;">Congratulations!</h1>
+                    <h2 style="font-size: 1.5rem; color: #2c3e50; margin-bottom: 30px; font-weight: normal;">You've completed the Data Science Playbook</h2>
+                    
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 30px; margin: 30px 0; color: white; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: -50px; right: -50px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                        <div style="position: absolute; bottom: -30px; left: -30px; width: 80px; height: 80px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+                        <h3 style="margin-bottom: 20px; font-size: 1.4rem;">✨ What You've Accomplished</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; text-align: left;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.2rem;">📥</span>
+                                <span>Data Ingestion Mastery</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.2rem;">🔍</span>
+                                <span>Data Understanding</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.2rem;">🧹</span>
+                                <span>Data Cleaning</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.2rem;">📈</span>
+                                <span>Data Analysis</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.2rem;">⚙️</span>
+                                <span>Feature Engineering</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 1.2rem;">🤖</span>
+                                <span>Model Training</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p style="font-size: 1.1rem; color: #6c757d; margin-bottom: 30px;">You now have a complete roadmap for any data science project from start to finish!</p>
+                    
+                    <div id="final-model-display"></div>
+                    
+                    <button class="btn btn-primary" onclick="restartWizard()" style="font-size: 1.1rem; padding: 15px 30px;">
+                        🔄 Start New Project
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <button class="btn btn-secondary" id="prevBtn" onclick="changeStep(-1)">Previous</button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span style="color: #6c757d; font-size: 0.9rem;" id="completion-status">0% Complete</span>
+            </div>
+            <button class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">Next</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 12;
+        let userChoices = {};
+        let completedItems = new Set();
+
+        // Model recommendation logic following the provided document
+        function getModelRecommendation() {
+            const choices = userChoices;
+            
+            if (choices.problemType === 'classification') {
+                if (choices.scalability === 'no-scale') {
+                    if (choices.interpretability === 'interpretable') {
+                        return 'Decision Tree Classification';
+                    } else {
+                        if (choices.simplicity === 'simple') {
+                            return 'K-Nearest Neighbors (KNN)';
+                        } else {
+                            return 'Support Vector Machine (SVM)';
+                        }
+                    }
+                } else { // yes-scale
+                    if (choices.complexity === 'linear') {
+                        return 'Logistic Regression';
+                    } else {
+                        if (choices.accuracy === 'high-accuracy') {
+                            return 'XGBoost';
+                        } else {
+                            return 'Random Forest Classification';
+                        }
+                    }
+                }
+            } else { // regression
+                if (choices.relationship === 'linear') {
+                    if (choices.features === 'single') {
+                        return 'Simple Linear Regression';
+                    } else {
+                        return 'Multiple Linear Regression';
+                    }
+                } else { // non-linear
+                    if (choices.priority === 'accuracy') {
+                        if (choices.scalability === 'yes-scale') {
+                            return 'Random Forest Regression';
+                        } else {
+                            return 'Support Vector Regression (SVR)';
+                        }
+                    } else { // balance
+                        if (choices.patterns === 'complex') {
+                            return 'Decision Tree Regression';
+                        } else {
+                            return 'Polynomial Regression';
+                        }
+                    }
+                }
+            }
+        }
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+            document.getElementById('current-step').textContent = currentStep;
+            document.getElementById('completion-status').textContent = Math.round(progress) + '% Complete';
+            
+            // Update phase indicator
+            let phase = 'Phase 1';
+            if (currentStep <= 1) phase = 'Phase 1';
+            else if (currentStep <= 3) phase = 'Phase 2';
+            else if (currentStep <= 4) phase = 'Phase 3';
+            else if (currentStep <= 5) phase = 'Phase 4';
+            else phase = 'Phase 5';
+            
+            document.getElementById('phase-indicator').textContent = phase;
+        }
+
+        function showStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            
+            // Show current step
+            if (step <= totalSteps) {
+                document.getElementById('step-' + step).classList.add('active');
+            } else {
+                document.getElementById('completion').classList.add('active');
+            }
+            
+            // Update navigation
+            document.getElementById('prevBtn').disabled = step === 1;
+            
+            // Clear previous selections when showing options steps (but preserve model results)
+            if (step >= 7 && step <= 11) {
+                const currentStepEl = document.getElementById('step-' + step);
+                currentStepEl.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                
+                // Remove any existing model selection results when navigating backwards
+                const existingResult = currentStepEl.querySelector('.model-selection-result');
+                if (existingResult) {
+                    existingResult.remove();
+                }
+            }
+            
+            if (step > totalSteps) {
+                document.getElementById('nextBtn').style.display = 'none';
+                // Show final model on completion page
+                showFinalModel();
+            } else {
+                document.getElementById('nextBtn').style.display = 'block';
+                updateNextButton();
+            }
+        }
+
+        function updateNextButton() {
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (currentStep <= 6) {
+                // Checklist steps - check if all items are completed
+                const currentStepEl = document.getElementById('step-' + currentStep);
+                const items = currentStepEl.querySelectorAll('.checklist-item');
+                const allCompleted = Array.from(items).every(item => item.classList.contains('completed'));
+                nextBtn.disabled = !allCompleted;
+            } else if (currentStep >= 7 && currentStep <= 11) {
+                // Option selection steps - check if an option is selected
+                const selectedOption = document.querySelector('#step-' + currentStep + ' .option.selected');
+                nextBtn.disabled = !selectedOption;
+            } else {
+                nextBtn.disabled = false;
+            }
+        }
+
+        function changeStep(direction) {
+            if (direction === 1) {
+                // Moving forward
+                if (currentStep <= totalSteps) {
+                    currentStep++;
+                }
+                
+                // Handle dynamic step skipping for forward navigation
+                if (currentStep === 8) {
+                    updateStep8();
+                } else if (currentStep === 9) {
+                    updateStep9();
+                } else if (currentStep === 10) {
+                    updateStep10();
+                } else if (currentStep === 11) {
+                    updateStep11();
+                } else if (currentStep === 12) {
+                    showModelRecommendation();
+                }
+            } else {
+                // Moving backward
+                if (currentStep > 1) {
+                    currentStep--;
+                }
+                
+                // Clear selections when going back to maintain consistency
+                if (currentStep === 7) {
+                    delete userChoices.problemType;
+                } else if (currentStep === 8) {
+                    delete userChoices.relationship;
+                    delete userChoices.scalability;
+                } else if (currentStep === 9) {
+                    delete userChoices.features;
+                    delete userChoices.priority;
+                    delete userChoices.interpretability;
+                    delete userChoices.complexity;
+                } else if (currentStep === 10) {
+                    delete userChoices.scalability;
+                    delete userChoices.patterns;
+                    delete userChoices.simplicity;
+                    delete userChoices.accuracy;
+                }
+                
+                // Re-setup the step content when going backwards
+                if (currentStep === 8) {
+                    updateStep8();
+                } else if (currentStep === 9) {
+                    updateStep9();
+                } else if (currentStep === 10) {
+                    updateStep10();
+                }
+            }
+            
+            showStep(currentStep);
+            updateProgress();
+        }
+
+        function updateStep8() {
+            const problemType = userChoices.problemType;
+            const step8Question = document.getElementById('step-8-question');
+            const step8Options = document.getElementById('step-8-options');
+            
+            if (problemType === 'regression') {
+                step8Question.textContent = 'What is the nature of the relationship between your features and the target variable?';
+                step8Options.innerHTML = `
+                    <div class="option" data-value="linear">
+                        <div class="option-label">📏 Linear</div>
+                        <div class="option-description">You believe the relationship is linear</div>
+                    </div>
+                    <div class="option" data-value="nonlinear">
+                        <div class="option-label">🌀 Non-linear</div>
+                        <div class="option-description">You believe the relationship is non-linear and more complex</div>
+                    </div>
+                `;
+            } else {
+                step8Question.textContent = 'Does your model need to scale well for large datasets with multiple features?';
+                step8Options.innerHTML = `
+                    <div class="option" data-value="no-scale">
+                        <div class="option-label">❌ No</div>
+                        <div class="option-description">Working with smaller datasets</div>
+                    </div>
+                    <div class="option" data-value="yes-scale">
+                        <div class="option-label">✅ Yes</div>
+                        <div class="option-description">Large datasets with many features</div>
+                    </div>
+                `;
+            }
+            
+            // Re-attach event listeners
+            attachOptionListeners();
+        }
+
+        function updateStep9() {
+            const step9Question = document.getElementById('step-9-question');
+            const step9Options = document.getElementById('step-9-options');
+            
+            if (userChoices.problemType === 'regression' && userChoices.relationship === 'linear') {
+                // Question 6: Number of features
+                step9Question.textContent = 'What is the number of features in your dataset?';
+                step9Options.innerHTML = `
+                    <div class="option" data-value="single">
+                        <div class="option-label">1️⃣ Single Feature</div>
+                        <div class="option-description">You have only one independent feature</div>
+                    </div>
+                    <div class="option" data-value="multiple">
+                        <div class="option-label">🔢 Multiple Features</div>
+                        <div class="option-description">You have more than one independent feature</div>
+                    </div>
+                `;
+            } else if (userChoices.problemType === 'regression' && userChoices.relationship === 'nonlinear') {
+                // Question 7: Priority for non-linear regression
+                step9Question.textContent = 'Do you need a highly accurate model that can capture complex patterns, or is interpretability and speed more important?';
+                step9Options.innerHTML = `
+                    <div class="option" data-value="accuracy">
+                        <div class="option-label">🎯 Accuracy Priority</div>
+                        <div class="option-description">I'm willing to sacrifice some interpretability for accuracy</div>
+                    </div>
+                    <div class="option" data-value="balance">
+                        <div class="option-label">⚖️ Balance</div>
+                        <div class="option-description">I need a balance between accuracy and interpretability</div>
+                    </div>
+                `;
+            } else if (userChoices.problemType === 'classification' && userChoices.scalability === 'no-scale') {
+                // Question 3: Interpretability for classification
+                step9Question.textContent = 'Is interpretability a priority?';
+                step9Options.innerHTML = `
+                    <div class="option" data-value="interpretable">
+                        <div class="option-label">🔍 Yes</div>
+                        <div class="option-description">I need to understand how the model makes decisions</div>
+                    </div>
+                    <div class="option" data-value="not-interpretable">
+                        <div class="option-label">🤖 No</div>
+                        <div class="option-description">Model performance is more important than explainability</div>
+                    </div>
+                `;
+            } else if (userChoices.problemType === 'classification' && userChoices.scalability === 'yes-scale') {
+                // Question 4: Data complexity for scalable classification
+                step9Question.textContent = 'How complex are the relationships in your data?';
+                step9Options.innerHTML = `
+                    <div class="option" data-value="linear">
+                        <div class="option-label">📏 Linear/Simple</div>
+                        <div class="option-description">The data has simple linear or planar relationships</div>
+                    </div>
+                    <div class="option" data-value="nonlinear">
+                        <div class="option-label">🌀 Non-linear/Complex</div>
+                        <div class="option-description">The data has complex, non-linear relationships</div>
+                    </div>
+                `;
+            }
+            
+            attachOptionListeners();
+        }
+
+        function updateStep10() {
+            const step10Question = document.getElementById('step-10-question');
+            const step10Options = document.getElementById('step-10-options');
+            
+            if (userChoices.problemType === 'regression' && userChoices.relationship === 'linear') {
+                // Show model immediately and skip to final step
+                showModelSelectionComplete();
+                currentStep = 12;
+                showStep(currentStep);
+                updateProgress();
+                return;
+            } else if (userChoices.problemType === 'regression' && userChoices.priority === 'accuracy') {
+                // Scalability question for accuracy-focused regression
+                step10Question.textContent = 'Is scalability important?';
+                step10Options.innerHTML = `
+                    <div class="option" data-value="yes-scale">
+                        <div class="option-label">✅ Yes</div>
+                        <div class="option-description">I need the model to handle large datasets efficiently</div>
+                    </div>
+                    <div class="option" data-value="no-scale">
+                        <div class="option-label">❌ No</div>
+                        <div class="option-description">Dataset size is not a concern</div>
+                    </div>
+                `;
+            } else if (userChoices.problemType === 'regression' && userChoices.priority === 'balance') {
+                // Pattern complexity for balanced regression
+                step10Question.textContent = 'Are there complex, irregular patterns in the data?';
+                step10Options.innerHTML = `
+                    <div class="option" data-value="complex">
+                        <div class="option-label">🌀 Yes</div>
+                        <div class="option-description">The data has complex, irregular patterns</div>
+                    </div>
+                    <div class="option" data-value="simple">
+                        <div class="option-label">📏 No</div>
+                        <div class="option-description">The patterns are relatively straightforward</div>
+                    </div>
+                `;
+            } else if (userChoices.problemType === 'classification' && userChoices.interpretability === 'not-interpretable') {
+                // Simplicity question for non-interpretable classification
+                step10Question.textContent = 'Is simplicity and intuitiveness a priority?';
+                step10Options.innerHTML = `
+                    <div class="option" data-value="simple">
+                        <div class="option-label">😊 Yes</div>
+                        <div class="option-description">I prefer simple, easy-to-understand models</div>
+                    </div>
+                    <div class="option" data-value="complex">
+                        <div class="option-label">🧠 No</div>
+                        <div class="option-description">I'm comfortable with more complex models</div>
+                    </div>
+                `;
+            } else if (userChoices.problemType === 'classification' && userChoices.complexity === 'nonlinear') {
+                // Accuracy vs Speed for complex classification
+                step10Question.textContent = 'Do you prioritize maximum accuracy or speed and reliability?';
+                step10Options.innerHTML = `
+                    <div class="option" data-value="high-accuracy">
+                        <div class="option-label">🎯 Maximum Accuracy</div>
+                        <div class="option-description">I want the highest accuracy possible (requires tuning)</div>
+                    </div>
+                    <div class="option" data-value="reliable">
+                        <div class="option-label">⚡ Speed & Reliability</div>
+                        <div class="option-description">I prefer fast, reliable results with minimal tuning</div>
+                    </div>
+                `;
+            } else {
+                // Show model selection complete and skip to final step for other paths
+                showModelSelectionComplete();
+                currentStep = 12;
+                showStep(currentStep);
+                updateProgress();
+                return;
+            }
+            
+            attachOptionListeners();
+        }
+
+        function updateStep11() {
+            // Show model selection complete and go to step 12
+            showModelSelectionComplete();
+            currentStep = 12;
+            showStep(currentStep);
+            updateProgress();
+        }
+        
+        function showModelSelectionComplete() {
+            const recommendedModel = getModelRecommendation();
+            const modelDescriptions = {
+                'Decision Tree Classification': 'Works great for datasets with noisy features (real world data)',
+                'K-Nearest Neighbors (KNN)': 'Great for nonlinear patterns',
+                'Support Vector Machine (SVM)': 'Works well with linear data',
+                'Logistic Regression': 'Perfect for linear relationships in classification',
+                'Random Forest Classification': 'Fast and reliable with minimal tuning',
+                'XGBoost': 'Requires tuning but is more accurate',
+                'Simple Linear Regression': 'Perfect for single feature linear relationships',
+                'Multiple Linear Regression': 'Ideal for multiple feature linear relationships',
+                'Random Forest Regression': 'Excellent for complex patterns with scalability',
+                'Support Vector Regression (SVR)': 'Great for complex patterns without scalability needs',
+                'Decision Tree Regression': 'Best for complex, irregular patterns with interpretability',
+                'Polynomial Regression': 'Good balance for straightforward non-linear patterns'
+            };
+            
+            const description = modelDescriptions[recommendedModel] || 'Recommended based on your requirements';
+            
+            // Store the model for later use
+            userChoices.selectedModel = recommendedModel;
+            userChoices.modelDescription = description;
+            
+            // Create a new step to show the model selection result
+            const currentStepEl = document.querySelector('.step.active');
+            if (currentStepEl) {
+                // Add the model display to the current step
+                let modelDisplay = currentStepEl.querySelector('.model-selection-result');
+                if (!modelDisplay) {
+                    modelDisplay = document.createElement('div');
+                    modelDisplay.className = 'model-selection-result';
+                    currentStepEl.appendChild(modelDisplay);
+                }
+                
+                modelDisplay.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 25px; border-radius: 15px; margin: 25px 0; text-align: center; animation: fadeIn 0.5s ease-in;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">🎉</div>
+                        <h3 style="font-size: 1.8rem; margin-bottom: 15px; font-weight: bold;">Model Selection Complete!</h3>
+                        <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 10px; margin: 15px 0;">
+                            <h4 style="font-size: 1.4rem; margin-bottom: 10px;">🎯 Your Optimal Model:</h4>
+                            <p style="font-size: 1.6rem; font-weight: bold; margin-bottom: 10px;">${recommendedModel}</p>
+                            <p style="font-size: 1rem; opacity: 0.9;">${description}</p>
+                        </div>
+                        <p style="font-size: 1.1rem; margin-top: 15px; opacity: 0.9;">Click "Next" to proceed to the training steps!</p>
+                    </div>
+                `;
+                
+                // Scroll to show the result
+                modelDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function showModelRecommendation() {
+            // Always get the current model recommendation (don't rely on stored values)
+            const recommendedModel = getModelRecommendation();
+            
+            const modelDescriptions = {
+                'Decision Tree Classification': 'Works great for datasets with noisy features (real world data)',
+                'K-Nearest Neighbors (KNN)': 'Great for nonlinear patterns',
+                'Support Vector Machine (SVM)': 'Works well with linear data',
+                'Logistic Regression': 'Perfect for linear relationships in classification',
+                'Random Forest Classification': 'Fast and reliable with minimal tuning',
+                'XGBoost': 'Requires tuning but is more accurate',
+                'Simple Linear Regression': 'Perfect for single feature linear relationships',
+                'Multiple Linear Regression': 'Ideal for multiple feature linear relationships',
+                'Random Forest Regression': 'Excellent for complex patterns with scalability',
+                'Support Vector Regression (SVR)': 'Great for complex patterns without scalability needs',
+                'Decision Tree Regression': 'Best for complex, irregular patterns with interpretability',
+                'Polynomial Regression': 'Good balance for straightforward non-linear patterns'
+            };
+            
+            const description = modelDescriptions[recommendedModel] || 'Recommended based on your requirements';
+            
+            // Update stored values for consistency
+            userChoices.selectedModel = recommendedModel;
+            userChoices.modelDescription = description;
+            
+            const recommendationDiv = document.getElementById('model-recommendation');
+            recommendationDiv.innerHTML = `
+                <div class="model-recommendation">
+                    <h3>🎯 Your Optimal Model: ${recommendedModel}</h3>
+                    <p>${description}</p>
+                </div>
+            `;
+        }
+        
+        function showFinalModel() {
+            // Always get the current model recommendation
+            const recommendedModel = getModelRecommendation();
+            const finalModelDiv = document.getElementById('final-model-display');
+            if (finalModelDiv && recommendedModel) {
+                finalModelDiv.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 15px; margin: 20px 0; text-align: center;">
+                        <h3 style="margin-bottom: 10px; font-size: 1.3rem;">🎯 Your Optimal Model</h3>
+                        <p style="font-size: 1.5rem; font-weight: bold; margin: 0;">${recommendedModel}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function attachOptionListeners() {
+            document.querySelectorAll('.option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove selected class from siblings
+                    this.parentNode.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                    
+                    // Store choice
+                    const value = this.getAttribute('data-value');
+                    if (currentStep === 7) userChoices.problemType = value;
+                    else if (currentStep === 8) {
+                        if (userChoices.problemType === 'regression') {
+                            userChoices.relationship = value;
+                        } else {
+                            userChoices.scalability = value;
+                        }
+                    }
+                    else if (currentStep === 9) {
+                        if (userChoices.problemType === 'regression' && userChoices.relationship === 'linear') {
+                            userChoices.features = value;
+                            // Show model selection complete immediately
+                            showModelSelectionComplete();
+                        } else if (userChoices.problemType === 'regression' && userChoices.relationship === 'nonlinear') {
+                            userChoices.priority = value;
+                        } else if (userChoices.problemType === 'classification' && userChoices.scalability === 'no-scale') {
+                            userChoices.interpretability = value;
+                            if (value === 'interpretable') {
+                                // Decision Tree - show completion
+                                showModelSelectionComplete();
+                            }
+                        } else if (userChoices.problemType === 'classification' && userChoices.scalability === 'yes-scale') {
+                            userChoices.complexity = value;
+                            if (value === 'linear') {
+                                // Logistic Regression - show completion
+                                showModelSelectionComplete();
+                            }
+                        }
+                    }
+                    else if (currentStep === 10) {
+                        if (userChoices.problemType === 'regression' && userChoices.priority === 'accuracy') {
+                            userChoices.scalability = value;
+                            showModelSelectionComplete();
+                        } else if (userChoices.problemType === 'regression' && userChoices.priority === 'balance') {
+                            userChoices.patterns = value;
+                            showModelSelectionComplete();
+                        } else if (userChoices.problemType === 'classification' && userChoices.interpretability === 'not-interpretable') {
+                            userChoices.simplicity = value;
+                            showModelSelectionComplete();
+                        } else if (userChoices.problemType === 'classification' && userChoices.complexity === 'nonlinear') {
+                            userChoices.accuracy = value;
+                            showModelSelectionComplete();
+                        }
+                    }
+                    else if (currentStep === 11) userChoices.step11 = value;
+                    
+                    updateNextButton();
+                });
+            });
+        }
+
+        function attachChecklistListeners() {
+            document.querySelectorAll('.checklist-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    this.classList.toggle('completed');
+                    updateNextButton();
+                });
+            });
+        }
+
+        function restartWizard() {
+            currentStep = 1;
+            userChoices = {};
+            completedItems.clear();
+            
+            // Reset all checklist items
+            document.querySelectorAll('.checklist-item').forEach(item => {
+                item.classList.remove('completed');
+            });
+            
+            // Reset all options
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Clear any existing model recommendations
+            const modelRecDiv = document.getElementById('model-recommendation');
+            if (modelRecDiv) {
+                modelRecDiv.innerHTML = '';
+            }
+            
+            const finalModelDiv = document.getElementById('final-model-display');
+            if (finalModelDiv) {
+                finalModelDiv.innerHTML = '';
+            }
+            
+            // Clear any model selection results from steps
+            document.querySelectorAll('.model-selection-result').forEach(result => {
+                result.remove();
+            });
+            
+            showStep(currentStep);
+            updateProgress();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            attachChecklistListeners();
+            attachOptionListeners();
+            showStep(currentStep);
+            updateProgress();
+        });
+    </script>
+</body>
+</html>
